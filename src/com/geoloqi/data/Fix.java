@@ -25,7 +25,6 @@ import com.google.android.maps.GeoPoint;
 public class Fix extends Location implements Serializable, Parcelable, Comparable<Fix> {
 
 	private static final long serialVersionUID = 3L;
-	public String username;
 	List<Pair<String, String>> rawData;
 
 	public Fix(Uri uri) {
@@ -38,7 +37,6 @@ public class Fix extends Location implements Serializable, Parcelable, Comparabl
 		this.setSpeed(Float.parseFloat(data[5]));
 		this.setTime(Long.parseLong(data[6]));
 		this.setAccuracy(Float.parseFloat(data[7]));
-		this.username = data.length > 8 ? data[8] : "Geoloqi";
 
 		rawData = new LinkedList<Pair<String, String>>();
 		for (int i = 0; 9 + 2 * i + 1 < data.length; i++) {
@@ -73,9 +71,8 @@ public class Fix extends Location implements Serializable, Parcelable, Comparabl
 		this.setTime(timestamp);
 	}
 
-	public Fix(Location l, String username, Pair<String, String>... rawData) {
+	public Fix(Location l, Pair<String, String>... rawData) {
 		super(l);
-		this.username = username;
 		this.rawData = Arrays.asList(rawData);
 	}
 
@@ -123,15 +120,6 @@ public class Fix extends Location implements Serializable, Parcelable, Comparabl
 			ADB.log("JSON Exception in toJSON: " + e.getMessage());
 			throw new RuntimeException(e.getMessage());
 		}
-	}
-
-	public Uri castToURI() {
-		String path = "/" + getLatitude() + "/" + getLongitude() + "/" + getAltitude() + "/" + getBearing() + "/" + getSpeed() + "/" + getTime() + "/" + getAccuracy() + "/" + username + "/";
-		for (Pair<String, String> datum : rawData) {
-			path += datum.first + "/" + datum.second + "/";
-		}
-		Uri uri = (new Uri.Builder()).scheme("geo").authority("geoloqi.com").path(path).build();
-		return uri;
 	}
 
 	public GeoPoint downcastToGeoPoint() {

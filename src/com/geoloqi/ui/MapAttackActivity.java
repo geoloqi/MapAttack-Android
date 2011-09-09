@@ -1,4 +1,4 @@
-package com.geoloqi;
+package com.geoloqi.ui;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -10,28 +10,30 @@ import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.geoloqi.ADB;
+import com.geoloqi.R;
+import com.geoloqi.services.AndroidPushNotifications;
+import com.geoloqi.services.GeoloqiPositioning;
+
 public class MapAttackActivity extends Activity {
 
 	WebView webView;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		ADB.logo();
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+
 		webView = (WebView) findViewById(R.id.webView);
-		webView.loadUrl(getString(R.string.webview_url));
+		webView.loadUrl("http://mapattack.org/game/" + this.getIntent().getExtras().getString("id"));
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.setWebViewClient(webViewClient);
 		webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
 		this.registerReceiver(pushReceiver, new IntentFilter("PUSH"));
-		ADB.log("Here!");
-	}
-
-	@Override
-	public void onStart() {
-		super.onStart();
-		startActivity(new Intent(this, APNService.class));
+		startService(new Intent(this, AndroidPushNotifications.class));
+		startService(new Intent(this, GeoloqiPositioning.class));
 	}
 
 	private WebViewClient webViewClient = new WebViewClient() {
@@ -47,7 +49,7 @@ public class MapAttackActivity extends Activity {
 
 		@Override
 		public void onReceive(Context ctxt, Intent intent) {
-			webView.loadUrl("javascript:function(" + intent.getExtras().getString("json") + ")");
+			webView.loadUrl("javascript:LQHandlePushData(" + intent.getExtras().getString("json") + ")");
 		}
 
 	};

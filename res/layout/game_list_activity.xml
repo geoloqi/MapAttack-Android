@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:orientation="vertical"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+  <Button 
+  	android:id="@+id/refresh_button"
+  	android:layout_width="fill_parent"
+  	android:layout_height="60dip"
+  	android:layout_alignParentBottom="true"
+  	android:clickable="true"
+  	android:text="Refresh" />
+  <TextView
+  	android:id="@+id/banner"
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:text="Nearby Games"
+  	android:gravity="center_horizontal"
+  	android:layout_alignParentTop="true"/>
+  <ListView
+  	android:id="@+android:id/list"
+  	android:layout_width="fill_parent"
+  	android:layout_height="wrap_content"
+  	android:layout_above="@id/refresh_button"
+  	android:layout_below="@id/banner" />
+</RelativeLayout>

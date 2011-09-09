@@ -4,6 +4,6 @@ import com.geoloqi.data.Fix;
 
 public interface GeoloqiFixSocket {
 
-	public void pushFixes(Fix[] fixes);
+	public void pushFix(Fix fix);
 
 }

@@ -1,4 +1,4 @@
-package com.geoloqi;
+package com.geoloqi.services;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -16,9 +16,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 
+import com.geoloqi.ADB;
+import com.geoloqi.R;
 import com.geoloqi.interfaces.GeoloqiConstants;
+import com.geoloqi.ui.MapAttackActivity;
 
-public class APNService extends Service {
+public class AndroidPushNotifications extends Service {
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -26,9 +29,15 @@ public class APNService extends Service {
 	}
 
 	@Override
+	public void onStart(Intent intent, int startId) {
+		new Notifier().start();
+	}
+
+	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		notifier.start();
-		return Service.START_FLAG_REDELIVERY;
+		ADB.log("Spinning up the APN");
+		new Notifier().start();
+		return Service.START_REDELIVER_INTENT;
 	}
 
 	@Override
@@ -36,7 +45,7 @@ public class APNService extends Service {
 
 	}
 
-	Thread notifier = new Thread() {
+	class Notifier extends Thread {
 
 		Socket socket;
 
@@ -44,10 +53,13 @@ public class APNService extends Service {
 		public void run() {
 			try {
 				socket = new Socket(GeoloqiConstants.downloadAddress, GeoloqiConstants.downloadPort);
+				ADB.log("Socket connected? -> " + socket.isConnected());
 				PrintWriter out = new PrintWriter(socket.getOutputStream());
+				out.print("0000");
+				out.flush();
 				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				out.print(Installation.id(APNService.this));
-				if (in.readLine().equals("ok")) {
+				//out.print(Installation.id(APNService.this));
+				if (in != null && in.readLine().equals("ok")) {
 					while (true) {
 						handleJSON(in.readLine());
 					}
@@ -60,17 +72,21 @@ public class APNService extends Service {
 		}
 
 		public void handleJSON(String json) {
+			ADB.log("Got json: " + json);
 			try {
 				JSONObject obj = new JSONObject(json);
 				if (obj.has("aps")) {
-					String message = obj.getString("aps");
-					notify(message);
+					JSONObject aps = obj.getJSONObject("aps");
+					if (aps.has("alert")) {
+						notify(aps.getString("alert"));
+					}
 				}
 				if (!obj.has("aps") || obj.length() > 2) {
 					forward(json);
 				}
 			} catch (JSONException e) {
-				throw new RuntimeException(e);
+				ADB.log("Could not parse string: " + json);
+				return;
 			}
 		}
 
@@ -78,11 +94,11 @@ public class APNService extends Service {
 			Notification notification = new Notification(R.drawable.ic_stat_notify, tickerText, System.currentTimeMillis());
 			CharSequence contentTitle = "Geoloqi";
 			CharSequence contentText = tickerText;
-			Intent contentIntent = new Intent(APNService.this, MapAttackActivity.class);
+			Intent contentIntent = new Intent(AndroidPushNotifications.this, MapAttackActivity.class);
 			contentIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			PendingIntent notificationIntent = PendingIntent.getActivity(APNService.this, 0, contentIntent, 0);
+			PendingIntent notificationIntent = PendingIntent.getActivity(AndroidPushNotifications.this, 0, contentIntent, 0);
 			notification.flags = Notification.FLAG_AUTO_CANCEL;
-			notification.setLatestEventInfo(APNService.this, contentTitle, contentText, notificationIntent);
+			notification.setLatestEventInfo(AndroidPushNotifications.this, contentTitle, contentText, notificationIntent);
 			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(1, notification);
 		}
 
