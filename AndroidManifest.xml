@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.geoloqi"
-	android:versionCode="1"
-	android:versionName="1.0">
+	package="com.geoloqi.mapattack"
+	android:versionCode="11255"
+	android:versionName="11.255">
 	<uses-sdk android:minSdkVersion="8" />
 	<application
 		android:icon="@drawable/ic_launcher_mapattack"
 		android:label="@string/app_name">
 		<service
-			android:name=".services.AndroidPushNotifications"
+			android:name="com.geoloqi.services.AndroidPushNotifications"
 			android:enabled="true" 
 			android:process=":lqRemote"/>
 		<service
-			android:name=".services.GeoloqiPositioning"
+			android:name="com.geoloqi.services.GeoloqiPositioning"
 			android:enabled="true" 
 			android:process=":lqRemote"/>
 		<activity
-			android:name=".ui.GameListActivity"
+			android:name="com.geoloqi.ui.GameListActivity"
 			android:theme="@android:style/Theme.NoTitleBar"
 			android:label="Map Attack"
 			android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
@@ -29,13 +29,13 @@
 			</intent-filter>
 		</activity>
 		<activity
-			android:name=".ui.SignInActivity"
+			android:name="com.geoloqi.ui.SignInActivity"
 			android:theme="@android:style/Theme.NoTitleBar"
 			android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
 			android:screenOrientation="portrait">
 		</activity>
 		<activity
-			android:name=".ui.MapAttackActivity"
+			android:name="com.geoloqi.ui.MapAttackActivity"
 			android:theme="@android:style/Theme.NoTitleBar"
 			android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
 			android:screenOrientation="portrait"

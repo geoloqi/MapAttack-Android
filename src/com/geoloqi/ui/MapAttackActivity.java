@@ -15,7 +15,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.geoloqi.ADB;
-import com.geoloqi.R;
+import com.geoloqi.mapattack.R;
 import com.geoloqi.interfaces.GeoloqiConstants;
 import com.geoloqi.interfaces.RPCException;
 import com.geoloqi.rpc.AccountMonitor;

@@ -22,7 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.geoloqi.ADB;
-import com.geoloqi.R;
+import com.geoloqi.mapattack.R;
 import com.geoloqi.data.Game;
 import com.geoloqi.interfaces.RPCException;
 import com.geoloqi.rpc.MapAttackClient;

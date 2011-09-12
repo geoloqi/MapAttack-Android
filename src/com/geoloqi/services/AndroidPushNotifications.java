@@ -22,7 +22,7 @@ import android.os.IBinder;
 
 import com.geoloqi.ADB;
 import com.geoloqi.Installation;
-import com.geoloqi.R;
+import com.geoloqi.mapattack.R;
 import com.geoloqi.interfaces.GeoloqiConstants;
 import com.geoloqi.ui.MapAttackActivity;
 

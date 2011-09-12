@@ -15,7 +15,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.geoloqi.ADB;
-import com.geoloqi.R;
+import com.geoloqi.mapattack.R;
 import com.geoloqi.interfaces.GeoloqiConstants;
 import com.geoloqi.rpc.AccountMonitor;
 
