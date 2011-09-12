@@ -5,18 +5,27 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.geoloqi.ADB;
 import com.geoloqi.R;
+import com.geoloqi.interfaces.GeoloqiConstants;
+import com.geoloqi.interfaces.RPCException;
+import com.geoloqi.rpc.AccountMonitor;
+import com.geoloqi.rpc.MapAttackClient;
 import com.geoloqi.services.AndroidPushNotifications;
-import com.geoloqi.services.GeoloqiPositioning;
 
 public class MapAttackActivity extends Activity {
 
+	String id, email, initials;
+	Intent apnIntent;
 	WebView webView;
 
 	@Override
@@ -25,15 +34,92 @@ public class MapAttackActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		webView = (WebView) findViewById(R.id.webView);
-		webView.loadUrl("http://mapattack.org/game/" + this.getIntent().getExtras().getString("id"));
+		{// Initialize variables.
+			SharedPreferences prefs = getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE);
+			id = getIntent().getExtras().getString("id");
+			email = prefs.getString("email", null);
+			initials = prefs.getString("initials", null);
+			apnIntent = new Intent(this, AndroidPushNotifications.class);
+			webView = (WebView) findViewById(R.id.webView);
+		}
+	}
+
+	@Override
+	public void onStart() {
+		try {
+			super.onStart();
+			if (!MapAttackClient.getApplicationClient(this).hasToken()) {
+				startActivityForResult(new Intent(this, SignInActivity.class), 77);
+			} else {
+				loadWebView();
+			}
+			{//Start services.
+				try {
+					unregisterReceiver(pushReceiver);
+				} catch (IllegalArgumentException e) {
+				}
+				registerReceiver(pushReceiver, new IntentFilter("PUSH"));
+				MapAttackClient.getApplicationClient(this).joinGame(id);
+				stopService(apnIntent);
+				startService(apnIntent);
+			}
+		} catch (RPCException e) {
+			onStart();
+		}
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.game_menu, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle item selection
+		switch (item.getItemId()) {
+		case R.id.share:
+			Intent shareIntent = new Intent(Intent.ACTION_SEND);
+			shareIntent.setType("text/plain");
+			shareIntent.putExtra(Intent.EXTRA_TEXT, "Map Attack!  http://mapattack.org/game/" + id + " #mapattack");
+			startActivity(Intent.createChooser(shareIntent, "Share this map: "));
+			return true;
+		case R.id.quit:
+			System.exit(0);
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == 77 && resultCode == RESULT_OK) {
+			loadWebView();
+		}
+	}
+
+	private void loadWebView() {
+		webView.clearCache(false);
+		webView.loadUrl("http://mapattack.org/game/" + id + "?id=" + AccountMonitor.getUserID(this));
 		webView.getSettings().setJavaScriptEnabled(true);
 		webView.setWebViewClient(webViewClient);
 		webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+	}
 
-		this.registerReceiver(pushReceiver, new IntentFilter("PUSH"));
-		startService(new Intent(this, AndroidPushNotifications.class));
-		startService(new Intent(this, GeoloqiPositioning.class));
+	@Override
+	public void onRestart() {
+		super.onRestart();
+		registerReceiver(pushReceiver, new IntentFilter("PUSH"));
+		startService(apnIntent);
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+		unregisterReceiver(pushReceiver);
+		stopService(apnIntent);
 	}
 
 	private WebViewClient webViewClient = new WebViewClient() {

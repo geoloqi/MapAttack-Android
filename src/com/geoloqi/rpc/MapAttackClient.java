@@ -12,7 +12,6 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
@@ -23,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.geoloqi.ADB;
 import com.geoloqi.Installation;
@@ -53,17 +53,29 @@ public class MapAttackClient {
 		client = new DefaultHttpClient(httpParams);
 	}
 
-	public void createAnonymousAccount(String name) throws RPCException {
+	public void createAnonymousAccount() throws RPCException {
 		try {
-			MyRequest request = new MyRequest(MyRequest.POST, GeoloqiConstants.URL_BASE + "user/create_anon");
-			Header authHeader = new BasicScheme().authenticate(new UsernamePasswordCredentials(GeoloqiConstants.GEOLOQI_ID, GeoloqiConstants.GEOLOQI_SECRET), request.getRequest());
-			request.addHeaders(authHeader);
-			String deviceID = Installation.getIDAsString(context);
-			String platform = android.os.Build.VERSION.RELEASE;
-			String hardware = android.os.Build.MODEL;
-			request.addEntityParams(pair("name", name), pair("device_id", deviceID), pair("platform", platform), pair("hardware", hardware));
+			String name, deviceID, platform, hardware;
+			{// Initialize variables.
+				name = context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).getString("initials", null);
+				deviceID = Installation.getIDAsString(context);
+				platform = android.os.Build.VERSION.RELEASE;
+				hardware = android.os.Build.MODEL;
+			}
+
+			MyRequest request;
+			{
+				request = new MyRequest(MyRequest.POST, GeoloqiConstants.URL_BASE + "user/create_anon");
+				request.addHeaders(new BasicScheme().authenticate(new UsernamePasswordCredentials(GeoloqiConstants.GEOLOQI_ID, GeoloqiConstants.GEOLOQI_SECRET), request.getRequest()));
+				request.addEntityParams(pair("name", name), pair("device_id", deviceID), pair("platform", platform), pair("hardware", hardware));
+			}
+
 			JSONObject response = send(request);
-			saveToken(new OAuthToken(response));
+
+			{//Save Results
+				saveToken(new OAuthToken(response));
+				context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).edit().putString("userID", response.getString("user_id")).commit();
+			}
 		} catch (JSONException e) {
 			throw new RuntimeException(e.getMessage());
 		} catch (AuthenticationException e) {
@@ -105,11 +117,21 @@ public class MapAttackClient {
 		}
 	}
 
-	public void joinGame(String id, String email, String initials) throws RPCException {
-		String token = context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).getString("authToken", null);
-		MyRequest request = new MyRequest(MyRequest.POST, "http://mapattack.org/game/" + id);
-		request.addEntityParams(pair("access_token", token), pair("email", email), pair("initials", initials));
-		try {
+	public void joinGame(String id) throws RPCException {
+		String token, email, initials;
+		{// Initialize variables
+			SharedPreferences prefs = context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE);
+			token = prefs.getString("authToken", null);
+			email = prefs.getString("email", null);
+			initials = prefs.getString("initials", null);
+		}
+		MyRequest request;
+		{// Initialize the request.
+			request = new MyRequest(MyRequest.POST, "http://mapattack.org/game/" + id + "/join");
+			request.addEntityParams(pair("access_token", token), pair("email", email), pair("initials", initials));
+		}
+
+		try {// Send will throw a RuntimeException for the non-JSON return value.
 			send(request);
 		} catch (RuntimeException e) {
 		}
@@ -145,9 +167,9 @@ public class MapAttackClient {
 		}
 	}
 
-	private static Header header(String name, String val) {
-		return new BasicHeader(name, val);
-	}
+	//	private static Header header(String name, String val) {
+	//		return new BasicHeader(name, val);
+	//	}
 
 	private static BasicNameValuePair pair(String key, String val) {
 		return new BasicNameValuePair(key, val);

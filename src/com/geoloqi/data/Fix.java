@@ -20,7 +20,6 @@ import android.util.Pair;
 
 import com.geoloqi.ADB;
 import com.geoloqi.interfaces.GeoloqiConstants;
-import com.google.android.maps.GeoPoint;
 
 public class Fix extends Location implements Serializable, Parcelable, Comparable<Fix> {
 
@@ -120,10 +119,6 @@ public class Fix extends Location implements Serializable, Parcelable, Comparabl
 			ADB.log("JSON Exception in toJSON: " + e.getMessage());
 			throw new RuntimeException(e.getMessage());
 		}
-	}
-
-	public GeoPoint downcastToGeoPoint() {
-		return new GeoPoint((int) (getLatitude() * 1000000.), (int) (getLongitude() * 1000000.));
 	}
 
 	@Override

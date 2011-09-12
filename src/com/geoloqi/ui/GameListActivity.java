@@ -6,7 +6,8 @@ import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -23,69 +24,67 @@ import android.widget.Toast;
 import com.geoloqi.ADB;
 import com.geoloqi.R;
 import com.geoloqi.data.Game;
-import com.geoloqi.interfaces.GeoloqiConstants;
 import com.geoloqi.interfaces.RPCException;
 import com.geoloqi.rpc.MapAttackClient;
+import com.geoloqi.services.GeoloqiPositioning;
 
 public class GameListActivity extends ListActivity {
 
 	private Game selection = null;
+	Intent positioningIntent;
+
+	OnTouchListener refreshListener = new OnTouchListener() {
+		@Override
+		public boolean onTouch(View view, MotionEvent evt) {
+			if (evt.getAction() == MotionEvent.ACTION_UP) {
+				new AsyncRequestGames().execute();
+			}
+			return view.onTouchEvent(evt);
+		}
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.game_list_activity);
-		((Button) findViewById(R.id.refresh_button)).setOnTouchListener(new OnTouchListener() {
-			@Override
-			public boolean onTouch(View view, MotionEvent evt) {
-				if (evt.getAction() == MotionEvent.ACTION_UP) {
-					new AsyncRequestGames().execute(45.5246, -122.6834);
-				}
-				return view.onTouchEvent(evt);
-			}
-		});
-		new AsyncRequestGames().execute(45.5246, -122.6834);
+		((Button) findViewById(R.id.refresh_button)).setOnTouchListener(refreshListener);
+
+		positioningIntent = new Intent(this, GeoloqiPositioning.class);
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
+		stopService(positioningIntent);
+		startService(positioningIntent);
+		new AsyncRequestGames().execute();
+	}
+
+	private Location getLastKnownLocation() {
+		LocationManager lm = ((LocationManager) getSystemService(LOCATION_SERVICE));
+		List<String> providers = lm.getAllProviders();
+		for (String provider : providers) {
+			Location last = lm.getLastKnownLocation(provider);
+			if (last != null) {
+				return last;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		stopService(positioningIntent);
 	}
 
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		selection = (Game) l.getItemAtPosition(position);
-		if (!MapAttackClient.getApplicationClient(this).hasToken()) {
-			startActivityForResult(new Intent(this, SignInActivity.class), 77);
-		} else {
-			startGame();
-		}
+		startActivity(new Intent(this, MapAttackActivity.class).putExtra("id", selection.id));
 	}
 
-	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == 77 && resultCode == RESULT_OK) {
-			startGame();
-		}
-	}
-
-	public void startGame() {
-		SharedPreferences prefs = getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE);
-		String id = selection.id, email = prefs.getString("email", null), initials = prefs.getString("initials", null);
-		try {
-			MapAttackClient.getApplicationClient(this).joinGame(id, email, initials);
-		} catch (RPCException e) {
-			ADB.makeToast(this, "Could not start game", Toast.LENGTH_LONG);
-			return;
-		}
-
-		Intent gameIntent = new Intent(this, MapAttackActivity.class);
-		gameIntent.putExtra("id", id);
-
-		startActivity(gameIntent);
-	}
-
-	class AsyncRequestGames extends AsyncTask<Double, Void, List<Game>> {
+	class AsyncRequestGames extends AsyncTask<Void, Void, List<Game>> {
 
 		ProgressDialog progressDialog;
 
@@ -95,9 +94,13 @@ public class GameListActivity extends ListActivity {
 		}
 
 		@Override
-		protected List<Game> doInBackground(Double... params) {
+		protected List<Game> doInBackground(Void... params) {
 			try {
-				List<Game> games = MapAttackClient.getApplicationClient(GameListActivity.this).getGames(params[0], params[1]);
+				Location location = getLastKnownLocation();
+				if (location == null) {
+					return null;
+				}
+				List<Game> games = MapAttackClient.getApplicationClient(GameListActivity.this).getGames(location.getLatitude(), location.getLongitude());
 				ADB.log("Found " + games.size() + (games.size() == 1 ? " game." : " games."));
 				for (Game game : games) {
 					ADB.log(game.name + ": " + game.description);

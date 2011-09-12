@@ -26,12 +26,6 @@ public class GeoloqiPositioning extends Service implements LocationListener {
 	@Override
 	public void onCreate() {
 		fixSocket = UDPClient.getApplicationClient(this);
-		registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-
-		for (String provider : ((LocationManager) getSystemService(LOCATION_SERVICE)).getAllProviders()) {
-			ADB.log("Registering for updates with " + provider);
-			((LocationManager) getSystemService(LOCATION_SERVICE)).requestLocationUpdates(provider, 0, 0, this);
-		}
 	}
 
 	@Override
@@ -41,7 +35,18 @@ public class GeoloqiPositioning extends Service implements LocationListener {
 
 	@Override
 	public void onStart(Intent intent, int startid) {
-		ADB.log("Spinning up the Geoloqi Positioning Service");
+		registerReceiver(batteryReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+		for (String provider : ((LocationManager) getSystemService(LOCATION_SERVICE)).getAllProviders()) {
+			if (!provider.equals("passive")) {
+				ADB.log("Registering for updates with " + provider);
+				((LocationManager) getSystemService(LOCATION_SERVICE)).requestLocationUpdates(provider, 0, 0, this);
+			}
+		}
+	}
+
+	public void onStop() {
+		unregisterReceiver(batteryReceiver);
+		((LocationManager) getSystemService(LOCATION_SERVICE)).removeUpdates(this);
 	}
 
 	@Override

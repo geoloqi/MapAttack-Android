@@ -64,4 +64,10 @@ public abstract class ADB {
 			}
 		};
 	}
+
+	//	public static doSynchronously(final Context context, Runnable runnable) {
+	//		AsyncTask task = new AsyncTask<Void,Void,Void>() {
+	//			
+	//		}
+	//	}
 }

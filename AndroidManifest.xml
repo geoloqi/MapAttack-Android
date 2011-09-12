@@ -6,7 +6,7 @@
 	android:versionName="1.0">
 	<uses-sdk android:minSdkVersion="8" />
 	<application
-		android:icon="@drawable/icon"
+		android:icon="@drawable/ic_launcher_mapattack"
 		android:label="@string/app_name">
 		<service
 			android:name=".services.AndroidPushNotifications"
@@ -38,7 +38,8 @@
 			android:name=".ui.MapAttackActivity"
 			android:theme="@android:style/Theme.NoTitleBar"
 			android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
-			android:screenOrientation="portrait">
+			android:screenOrientation="portrait"
+			android:launchMode="singleTask">
 		</activity>
 	</application>
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
