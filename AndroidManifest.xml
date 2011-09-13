@@ -2,8 +2,8 @@
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.geoloqi.mapattack"
-	android:versionCode="11255"
-	android:versionName="11.255">
+	android:versionCode="11256"
+	android:versionName="11.256">
 	<uses-sdk android:minSdkVersion="8" />
 	<application
 		android:icon="@drawable/ic_launcher_mapattack"
