@@ -49,6 +49,7 @@ public class MapAttackActivity extends Activity {
 		try {
 			super.onStart();
 			if (!MapAttackClient.getApplicationClient(this).hasToken()) {
+				// TODO: Please don't do this! It breaks the activity lifecycle. Refactor!
 				startActivityForResult(new Intent(this, SignInActivity.class), 77);
 			} else {
 				loadWebView();
