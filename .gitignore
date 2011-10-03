@@ -1,1 +1,17 @@
-src/com/geoloqi/interfaces/GeoloqiConstants.java
+# Ignore system files
+.DS_Store
+
+# Ignore generated files and binaries
+bin/
+gen/
+
+# Ignore editor files
+*.swp
+.settings
+.project
+.classpath
+local.properties
+proguard.cfg
+
+# Ignore Constants file
+GeoloqiConstants.java
