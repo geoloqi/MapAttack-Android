@@ -19,7 +19,7 @@ import android.os.Parcelable;
 import android.util.Pair;
 
 import com.geoloqi.ADB;
-import com.geoloqi.interfaces.GeoloqiConstants;
+import static com.geoloqi.interfaces.GeoloqiConstants.VERSION;;
 
 public class Fix extends Location implements Serializable, Parcelable, Comparable<Fix> {
 
@@ -77,7 +77,7 @@ public class Fix extends Location implements Serializable, Parcelable, Comparabl
 
 	public JSONObject castToJSONObject() {
 		try {
-			String version = GeoloqiConstants.version;
+			String version = VERSION;
 			String platform = "2.1";
 			String hardware = "unknown";
 			JSONObject point = new JSONObject();

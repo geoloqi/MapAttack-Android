@@ -30,7 +30,7 @@ import com.geoloqi.data.Game;
 import com.geoloqi.interfaces.GeoloqiConstants;
 import com.geoloqi.interfaces.RPCException;
 
-public class MapAttackClient {
+public class MapAttackClient implements GeoloqiConstants {
 
 	private static final int TIMEOUT = 60000;
 
@@ -57,7 +57,7 @@ public class MapAttackClient {
 		try {
 			String name, deviceID, platform, hardware;
 			{// Initialize variables.
-				name = context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).getString("initials", null);
+				name = context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE).getString("initials", null);
 				deviceID = Installation.getIDAsString(context);
 				platform = android.os.Build.VERSION.RELEASE;
 				hardware = android.os.Build.MODEL;
@@ -65,8 +65,8 @@ public class MapAttackClient {
 
 			MyRequest request;
 			{
-				request = new MyRequest(MyRequest.POST, GeoloqiConstants.URL_BASE + "user/create_anon");
-				request.addHeaders(new BasicScheme().authenticate(new UsernamePasswordCredentials(GeoloqiConstants.GEOLOQI_ID, GeoloqiConstants.GEOLOQI_SECRET), request.getRequest()));
+				request = new MyRequest(MyRequest.POST, URL_BASE + "user/create_anon");
+				request.addHeaders(new BasicScheme().authenticate(new UsernamePasswordCredentials(GEOLOQI_ID, GEOLOQI_SECRET), request.getRequest()));
 				request.addEntityParams(pair("name", name), pair("device_id", deviceID), pair("platform", platform), pair("hardware", hardware));
 			}
 
@@ -74,7 +74,7 @@ public class MapAttackClient {
 
 			{//Save Results
 				saveToken(new OAuthToken(response));
-				context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).edit().putString("userID", response.getString("user_id")).commit();
+				context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE).edit().putString("userID", response.getString("user_id")).commit();
 			}
 		} catch (JSONException e) {
 			throw new RuntimeException(e.getMessage());
@@ -84,22 +84,23 @@ public class MapAttackClient {
 	}
 
 	protected void saveToken(OAuthToken token) {
-		context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).edit().putString("authToken", token.accessToken).commit();
+		context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE).edit().putString("authToken", token.accessToken).commit();
 	}
 
 	public boolean hasToken() {
-		return context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).contains("authToken");
+		return context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE).contains("authToken");
 	}
 
 	public String getToken() {
-		return context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).getString("authToken", null);
+		return context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE).getString("authToken", null);
 	}
 
 	public List<Game> getGames(Double latitude, Double longitude) throws RPCException {
-		MyRequest request = new MyRequest(MyRequest.GET, GeoloqiConstants.gameListAddress + "&latitude=" + latitude + "&longitude=" + longitude);
+		MyRequest request = new MyRequest(MyRequest.GET,
+				GAME_LIST_ADDRESS + "&latitude=" + latitude + "&longitude=" + longitude);
 		Header authHeader;
 		try {
-			authHeader = new BasicScheme().authenticate(new UsernamePasswordCredentials(GeoloqiConstants.GEOLOQI_ID, GeoloqiConstants.GEOLOQI_SECRET), request.getRequest());
+			authHeader = new BasicScheme().authenticate(new UsernamePasswordCredentials(GEOLOQI_ID, GEOLOQI_SECRET), request.getRequest());
 		} catch (AuthenticationException e) {
 			throw new RPCException(e.getMessage());
 		}
@@ -120,7 +121,7 @@ public class MapAttackClient {
 	public void joinGame(String id) throws RPCException {
 		String token, email, initials;
 		{// Initialize variables
-			SharedPreferences prefs = context.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE);
+			SharedPreferences prefs = context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE);
 			token = prefs.getString("authToken", null);
 			email = prefs.getString("email", null);
 			initials = prefs.getString("initials", null);
@@ -166,10 +167,6 @@ public class MapAttackClient {
 			return response;
 		}
 	}
-
-	//	private static Header header(String name, String val) {
-	//		return new BasicHeader(name, val);
-	//	}
 
 	private static BasicNameValuePair pair(String key, String val) {
 		return new BasicNameValuePair(key, val);

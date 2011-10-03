@@ -23,8 +23,11 @@ import android.os.IBinder;
 import com.geoloqi.ADB;
 import com.geoloqi.Installation;
 import com.geoloqi.mapattack.R;
-import com.geoloqi.interfaces.GeoloqiConstants;
 import com.geoloqi.ui.MapAttackActivity;
+
+import static com.geoloqi.interfaces.GeoloqiConstants.PREFERENCES_FILE;
+import static com.geoloqi.interfaces.GeoloqiConstants.DOWNLOAD_ADDRESS;
+import static com.geoloqi.interfaces.GeoloqiConstants.DOWNLOAD_PORT;
 
 public class AndroidPushNotifications extends Service {
 
@@ -80,8 +83,9 @@ public class AndroidPushNotifications extends Service {
 		public void run() {
 			try {
 				{//Initialize variables.
-					userID = AndroidPushNotifications.this.getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE).getString("userID", null);
-					socket = new Socket(GeoloqiConstants.downloadAddress, GeoloqiConstants.downloadPort);
+					userID = AndroidPushNotifications.this.getSharedPreferences(
+							PREFERENCES_FILE, Context.MODE_PRIVATE).getString("userID", null);
+					socket = new Socket(DOWNLOAD_ADDRESS, DOWNLOAD_PORT);
 				}
 				while (running) {
 					PrintWriter out = new PrintWriter(socket.getOutputStream());
