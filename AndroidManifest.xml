@@ -1,47 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.geoloqi.mapattack"
-	android:versionCode="11256"
-	android:versionName="11.256">
-	<uses-sdk android:minSdkVersion="8" />
-	<application
-		android:icon="@drawable/ic_launcher_mapattack"
-		android:label="@string/app_name">
-		<service
-			android:name="com.geoloqi.services.AndroidPushNotifications"
-			android:enabled="true" 
-			android:process=":lqRemote"/>
-		<service
-			android:name="com.geoloqi.services.GeoloqiPositioning"
-			android:enabled="true" 
-			android:process=":lqRemote"/>
-		<activity
-			android:name="com.geoloqi.ui.GameListActivity"
-			android:theme="@android:style/Theme.NoTitleBar"
-			android:label="Map Attack"
-			android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
-			android:screenOrientation="portrait"
-			android:launchMode="singleTask">
-			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
-				<category android:name="android.intent.category.LAUNCHER" />
-			</intent-filter>
-		</activity>
-		<activity
-			android:name="com.geoloqi.ui.SignInActivity"
-			android:theme="@android:style/Theme.NoTitleBar"
-			android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
-			android:screenOrientation="portrait">
-		</activity>
-		<activity
-			android:name="com.geoloqi.ui.MapAttackActivity"
-			android:theme="@android:style/Theme.NoTitleBar"
-			android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|fontScale"
-			android:screenOrientation="portrait"
-			android:launchMode="singleTask">
-		</activity>
-	</application>
-	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-	<uses-permission android:name="android.permission.INTERNET" />
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.geoloqi.mapattack"
+    android:versionCode="11256"
+    android:versionName="11.256">
+
+    <uses-sdk android:minSdkVersion="8" />
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:icon="@drawable/ic_launcher_mapattack"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.Light.NoTitleBar">
+        <!-- Services -->
+        <service
+            android:name="com.geoloqi.services.AndroidPushNotifications"
+            android:enabled="true"
+            android:process=":lqRemote" />
+            
+        <service
+            android:name="com.geoloqi.services.GeoloqiPositioning"
+            android:enabled="true"
+            android:process=":lqRemote" />
+            
+        <!-- Activities -->
+        <activity
+            android:name="com.geoloqi.ui.GameListActivity"
+            android:label="Map Attack">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:name="com.geoloqi.ui.SignInActivity">
+        </activity>
+        
+        <activity
+            android:name="com.geoloqi.ui.MapAttackActivity"
+            android:launchMode="singleTop">
+        </activity>
+    </application>
 </manifest>
