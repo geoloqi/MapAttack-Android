@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MapAttack</string>
+    
+    <!-- Game List -->
+    <string name="game_list_label">Games near your location.</string>
+    <string name="game_list_empty_text">There are no games in your area.\n\nIf you would like to bring a game to your area, please contact us:\n\nplay@mapattack.org</string>
+    
+    <!-- Buttons -->
+    <string name="find_a_game_button">Refresh</string>
 </resources>

@@ -1,27 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:orientation="vertical"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent">
-  <Button 
-  	android:id="@+id/refresh_button"
-  	android:layout_width="fill_parent"
-  	android:layout_height="60dip"
-  	android:layout_alignParentBottom="true"
-  	android:clickable="true"
-  	android:text="Refresh" />
-  <TextView
-  	android:id="@+id/banner"
-  	android:layout_width="fill_parent"
-  	android:layout_height="wrap_content"
-  	android:text="Nearby Games"
-  	android:gravity="center_horizontal"
-  	android:layout_alignParentTop="true"/>
-  <ListView
-  	android:id="@+android:id/list"
-  	android:layout_width="fill_parent"
-  	android:layout_height="wrap_content"
-  	android:layout_above="@id/refresh_button"
-  	android:layout_below="@id/banner" />
-</RelativeLayout>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="#333333">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="10dp"
+            android:src="@drawable/map_attack_logo" />
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="5dp"
+            android:gravity="center"
+            android:background="#666"
+            android:textColor="#FFF"
+            android:textSize="12sp"
+            android:text="@string/game_list_label" />
+    </LinearLayout>
+    
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        android:gravity="center">
+        <ListView
+            android:id="@+android:id/list"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:fastScrollEnabled="true" />
+        
+        <!-- Displayed if list is empty -->
+        <LinearLayout
+            android:id="@+android:id/empty"
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:padding="20dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:autoLink="email"
+                android:text="@string/game_list_empty_text" />
+        </LinearLayout>
+    </LinearLayout>
+    
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:background="#EEE">
+       <ImageButton
+            android:id="@+id/geoloqi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/powered_by_geoloqi"
+            android:background="@null" />
+        <Button 
+            android:id="@+id/refresh_button"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:text="@string/find_a_game_button" />
+    </RelativeLayout>
+</LinearLayout>
