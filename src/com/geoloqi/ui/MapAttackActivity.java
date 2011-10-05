@@ -23,6 +23,7 @@ import com.geoloqi.rpc.MapAttackClient;
 import com.geoloqi.services.AndroidPushNotifications;
 
 public class MapAttackActivity extends Activity {
+	public static final String PARAM_GAME_ID = "game_id";
 
 	String id, email, initials;
 	Intent apnIntent;
@@ -36,7 +37,7 @@ public class MapAttackActivity extends Activity {
 
 		{// Initialize variables.
 			SharedPreferences prefs = getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE);
-			id = getIntent().getExtras().getString("id");
+			id = getIntent().getExtras().getString(PARAM_GAME_ID);
 			email = prefs.getString("email", null);
 			initials = prefs.getString("initials", null);
 			apnIntent = new Intent(this, AndroidPushNotifications.class);

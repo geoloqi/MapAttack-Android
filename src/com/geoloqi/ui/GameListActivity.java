@@ -14,17 +14,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.geoloqi.ADB;
 import com.geoloqi.mapattack.R;
 import com.geoloqi.data.Game;
 import com.geoloqi.interfaces.RPCException;
@@ -36,19 +31,19 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 	public static final String TAG = "GameListActivity";
 
 	public static final String PARAM_SYNC_ON_START = "sync_on_start";
-
-	/** Stub */
+	
+	private boolean mSyncOnStart = true;
 	private Intent mPositioningIntent;
+	private List<Game> mGameList = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.game_list_activity);
 		
-		boolean syncOnStart = true;
 		if (savedInstanceState != null) {
 			// Restore our saved instance state
-			syncOnStart = savedInstanceState.getBoolean(PARAM_SYNC_ON_START, true);
+			mSyncOnStart = savedInstanceState.getBoolean(PARAM_SYNC_ON_START, true);
 		}
 		
 		// Find our views
@@ -62,13 +57,14 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		// Reference our positioning service Intent
 		mPositioningIntent = new Intent(this, GeoloqiPositioning.class);
 		
-		if (syncOnStart) {
+		if (mSyncOnStart) {
 			// Start our positioning service
 			stopService(mPositioningIntent);
 			startService(mPositioningIntent);
 			
 			// Search for nearby games
-			new RequestGamesListTask(this).execute();
+			setLoading(true);
+			new RequestGamesListTask(this, getLastKnownLocation(), false).execute();
 		}
 	}
 
@@ -77,15 +73,29 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		super.onDestroy();
 		stopService(mPositioningIntent);
 	}
-	
+
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		
-		// Don't sync just because the device orientation changed
-		outState.putBoolean(PARAM_SYNC_ON_START, false);
+		// TODO: Cache the game list so we don't have to resync on orientation change
+		outState.putBoolean(PARAM_SYNC_ON_START, true);
 	}
 
+	/**
+	 * Populate the ListView with a new GameListArrayAdapter
+	 * from the provided List of Game objects.
+	 * 
+	 * @param games
+	 */
+	private void populateGameList(final List<Game> games) {
+		mGameList = games;
+		setListAdapter(new GameListArrayAdapter(this, R.layout.game_list_element,
+				mGameList.toArray(new Game[mGameList.size()])));
+		setLoading(false);
+	}
+
+	/** Get the last known location from the device. */
 	private Location getLastKnownLocation() {
 		LocationManager lm = ((LocationManager) getSystemService(LOCATION_SERVICE));
 		List<String> providers = lm.getAllProviders();
@@ -101,67 +111,108 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		final Game selection = (Game) l.getItemAtPosition(position);
-		startActivity(new Intent(this, MapAttackActivity.class).putExtra("id", selection.id));
+
+		// Start the MapAttackActivity for the indicated game
+		Intent intent = new Intent(this, MapAttackActivity.class);
+		intent.putExtra(MapAttackActivity.PARAM_GAME_ID, selection.id);
+		startActivity(intent);
 	}
 
-	/** Stub */
-	class RequestGamesListTask extends AsyncTask<Void, Void, List<Game>> {
-		final ProgressDialog mProgressDialog;
-
-		public RequestGamesListTask(final Context context) {
-			mProgressDialog = new ProgressDialog(context);
-			mProgressDialog.setTitle(null);
-			mProgressDialog.setMessage("Searching for nearby games...");
-		}
-
-		@Override
-		protected void onPreExecute() {
-			mProgressDialog.show();
-		}
-
-		@Override
-		protected List<Game> doInBackground(Void... params) {
-			try {
-				Location location = getLastKnownLocation();
-				if (location == null) {
-					return null;
-				}
-				List<Game> games = MapAttackClient.getApplicationClient(
-						GameListActivity.this).getGames(location.getLatitude(), location.getLongitude());
-				ADB.log("Found " + games.size() + (games.size() == 1 ? " game." : " games."));
-				for (Game game : games) {
-					ADB.log(game.name + ": " + game.description);
-				}
-				return games;
-			} catch (RPCException e) {
-				ADB.makeToast(GameListActivity.this, "The game server is unavailable!", Toast.LENGTH_LONG);
-				return null;
-			}
-		}
-
-		@Override
-		protected void onPostExecute(List<Game> games) {
-			if (games != null) {
-				setListAdapter(new GameListArrayAdapter(GameListActivity.this,
-						R.layout.game_list_element, games.toArray(new Game[games.size()])));
-			}
-			mProgressDialog.dismiss();
-		}
-	}
-	
 	@Override
 	public void onClick(View view) {
 		switch(view.getId()) {
 		case R.id.refresh_button:
-			new RequestGamesListTask(this).execute();
-			return;
+			new RequestGamesListTask(this, getLastKnownLocation()).execute();
+			break;
 		case R.id.geoloqi:
 			final Intent geoloqiIntent = new Intent(Intent.ACTION_VIEW,
 					Uri.parse("https://geoloqi.com/"));
 			geoloqiIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 			geoloqiIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			startActivity(geoloqiIntent);
-			return;
+			break;
+		}
+	}
+
+	/** Show or hide the loading indicator. */
+	private void setLoading(boolean loading) {
+		ProgressBar spinner = (ProgressBar) findViewById(R.id.loading);
+		ListView listView = getListView();
+		View emptyView = listView.getEmptyView();
+
+		if (loading) {
+			spinner.setVisibility(View.VISIBLE);
+			listView.setVisibility(View.GONE);
+			emptyView.setVisibility(View.GONE);
+		} else {
+			spinner.setVisibility(View.GONE);
+			listView.setVisibility(View.VISIBLE);
+			emptyView.setVisibility(View.GONE);
+		}
+	}
+
+	/**
+	 * A simple AsyncTask to request the game list from the server.
+	 * @TODO: Move this to an external class file.
+	 * */
+	private static class RequestGamesListTask extends AsyncTask<Void, Void, List<Game>> {
+		private final Context mContext;
+		private final Location mLocation;
+		
+		private ProgressDialog mProgressDialog = null;
+
+		public RequestGamesListTask(final Context context, final Location location) {
+			this(context, location, true);
+		}
+		
+		public RequestGamesListTask(final Context context, final Location location, final boolean displayDialog) {
+			mContext = context;
+			mLocation = location;
+			
+			// Build a progress dialog
+			if (displayDialog) {
+				mProgressDialog = new ProgressDialog(context);
+				mProgressDialog.setTitle(null);
+				mProgressDialog.setMessage(context.getString(R.string.game_list_loading_text));
+			}
+		}
+
+		@Override
+		protected void onPreExecute() {
+			// Show our progress dialog
+			if (mProgressDialog != null) {
+				mProgressDialog.show();
+			}
+		}
+
+		@Override
+		protected List<Game> doInBackground(Void... params) {
+			if (mLocation != null) {
+				try {
+					return MapAttackClient.getApplicationClient(mContext).getGames(mLocation.getLatitude(),
+							mLocation.getLongitude());
+				} catch (RPCException e) {
+					Log.e(TAG, "Got an RPCException when looking for nearby games.", e);
+					Toast.makeText(mContext, R.string.error_game_list_unavailable, Toast.LENGTH_LONG);
+				}
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(List<Game> games) {
+			if (games != null) {
+				try {
+					((GameListActivity) mContext).populateGameList(games);
+				} catch (ClassCastException e) {
+					Log.w(TAG, "Got a ClassCastException when trying to update the game list!", e);
+				}
+			}
+
+			// Dismiss our progress dialog
+			if (mProgressDialog != null) {
+				mProgressDialog.dismiss();
+			}
 		}
 	}
 }
