@@ -30,6 +30,7 @@ import com.geoloqi.data.Game;
 import com.geoloqi.interfaces.RPCException;
 import com.geoloqi.rpc.MapAttackClient;
 import com.geoloqi.services.GeoloqiPositioning;
+import com.geoloqi.widget.GameListArrayAdapter;
 
 public class GameListActivity extends ListActivity implements OnClickListener {
 	public static final String TAG = "GameListActivity";
@@ -141,36 +142,13 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		@Override
 		protected void onPostExecute(List<Game> games) {
 			if (games != null) {
-				setListAdapter(new GameArrayAdapter(GameListActivity.this,
+				setListAdapter(new GameListArrayAdapter(GameListActivity.this,
 						R.layout.game_list_element, games.toArray(new Game[games.size()])));
 			}
 			mProgressDialog.dismiss();
 		}
 	}
-
-	class GameArrayAdapter extends ArrayAdapter<Game> {
-		public GameArrayAdapter(Context context, int textViewResourceId, Game[] objects) {
-			super(context, textViewResourceId, objects);
-		}
-
-		List<Game> games = null;
-
-		public void setGameList(List<Game> games) {
-			this.games = games;
-		}
-		
-		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			// TODO: This seems overly complex. Refactor!
-			LinearLayout element = (LinearLayout) LinearLayout.inflate(GameListActivity.this,
-					R.layout.game_list_element, null);
-			Game game = this.getItem(position);
-			((TextView) element.findViewById(R.id.name)).setText(game.name);
-			((TextView) element.findViewById(R.id.description)).setText(game.description);
-			return element;
-		}
-	}
-
+	
 	@Override
 	public void onClick(View view) {
 		switch(view.getId()) {
