@@ -11,20 +11,20 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 
-/** Stub */
+/** A custom ArrayAdapter implementation for displaying Map Attack games. */
 public class GameListArrayAdapter extends ArrayAdapter<Game> {
 	private final int mLayoutResourceId;
 	private final LayoutInflater mInflater;
 	private final Game[] mGames;
 
-	/** Stub */
+	/** A simple class to cache references to view resources. */
 	private static class ViewHolder {
 		public TextView name;
 		public TextView description;
 	}
 
 	/**
-	 * Stub
+	 * Gets a layout inflater and stores it for use by the getView method.
 	 * 
 	 * @param context
 	 * @param textViewResourceId
