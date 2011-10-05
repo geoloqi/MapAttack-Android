@@ -8,8 +8,11 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.util.Log;
 import android.util.Pair;
 
 import com.geoloqi.ADB;
@@ -18,6 +21,7 @@ import com.geoloqi.interfaces.GeoloqiFixSocket;
 import com.geoloqi.mapattack.UDPClient;
 
 public class GeoloqiPositioning extends Service implements LocationListener {
+	public static final String TAG = "GeoloqiPositioning";
 
 	private int batteryLevel = 0;
 
@@ -25,7 +29,13 @@ public class GeoloqiPositioning extends Service implements LocationListener {
 
 	@Override
 	public void onCreate() {
-		fixSocket = UDPClient.getApplicationClient(this);
+		if (isConnected()) {
+			fixSocket = UDPClient.getApplicationClient(this);
+		} else {
+			// TODO: This is a crude check. Should probably be rolled into UDPClient class directly.
+			Log.w(TAG, "Network unavailable! Stopping positioning service.");
+			stopSelf();
+		}
 	}
 
 	@Override
@@ -87,4 +97,13 @@ public class GeoloqiPositioning extends Service implements LocationListener {
 			batteryLevel = intent.getIntExtra("level", 0);
 		}
 	};
+	
+	/** Determine if the network is connected and available. */
+	private boolean isConnected() {
+		ConnectivityManager manager = (ConnectivityManager) getApplicationContext()
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo activeNetwork = manager.getActiveNetworkInfo();
+		
+		return (activeNetwork != null && activeNetwork.isConnected());
+	}
 }
