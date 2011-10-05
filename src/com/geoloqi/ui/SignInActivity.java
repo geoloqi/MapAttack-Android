@@ -26,6 +26,8 @@ public class SignInActivity extends Activity implements OnClickListener {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.sign_in_activity);
+		
+		// TODO: Display game title on SignInActivity
 		findViewById(R.id.submit_button).setOnClickListener(this);
 	}
 
