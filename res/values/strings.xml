@@ -5,7 +5,11 @@
     <!-- Game List -->
     <string name="game_list_label">Games near your location.</string>
     <string name="game_list_empty_text">There are no games in your area.\n\nIf you would like to bring a game to your area, please contact us:\n\nplay@mapattack.org</string>
+    <string name="game_list_loading_text">Searching for games...</string>
     
     <!-- Buttons -->
     <string name="find_a_game_button">Refresh</string>
+    
+    <!-- Error Messages -->
+    <string name="error_game_list_unavailable">The game server is not responding, please try again later.</string>
 </resources>
