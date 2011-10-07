@@ -11,6 +11,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -19,6 +20,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.widget.TextView;
 
 import com.geoloqi.mapattack.R;
 import com.geoloqi.data.Game;
@@ -30,33 +32,39 @@ import com.geoloqi.widget.GameListArrayAdapter;
 public class GameListActivity extends ListActivity implements OnClickListener {
 	public static final String TAG = "GameListActivity";
 
+	public static final String PARAM_GAME_LIST = "game_list";
+	public static final String PARAM_NEAREST_INTERSECTION = "nearest_intersection";
 	public static final String PARAM_SYNC_ON_START = "sync_on_start";
 	
 	private boolean mSyncOnStart = true;
 	private Intent mPositioningIntent;
 	private List<Game> mGameList = null;
+	private String mNearestIntersection = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.game_list_activity);
-		
+
 		if (savedInstanceState != null) {
 			// Restore our saved instance state
 			mSyncOnStart = savedInstanceState.getBoolean(PARAM_SYNC_ON_START, true);
+			mNearestIntersection = savedInstanceState.getString(PARAM_NEAREST_INTERSECTION);
+			
+			setNearestIntersection(mNearestIntersection);
 		}
-		
+
 		// Find our views
 		final Button refreshButton = (Button) findViewById(R.id.refresh_button);
 		final ImageButton geoloqiButton = (ImageButton) findViewById(R.id.geoloqi);
-		
+
 		// Set our on click listeners
 		refreshButton.setOnClickListener(this);
 		geoloqiButton.setOnClickListener(this);
-		
+
 		// Reference our positioning service Intent
 		mPositioningIntent = new Intent(this, GeoloqiPositioning.class);
-		
+
 		if (mSyncOnStart) {
 			// Start our positioning service
 			stopService(mPositioningIntent);
@@ -80,6 +88,7 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		
 		// TODO: Cache the game list so we don't have to resync on orientation change
 		outState.putBoolean(PARAM_SYNC_ON_START, true);
+		outState.putString(PARAM_NEAREST_INTERSECTION, mNearestIntersection);
 	}
 
 	/**
@@ -93,6 +102,21 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		setListAdapter(new GameListArrayAdapter(this, R.layout.game_list_element,
 				mGameList.toArray(new Game[mGameList.size()])));
 		setLoading(false);
+	}
+
+	/**
+	 * Set the game list label with the nearest intersection.
+	 * 
+	 * @param intersection
+	 */
+	private void setNearestIntersection(final String intersection) {
+		if (!TextUtils.isEmpty(intersection)) {
+			mNearestIntersection = intersection;
+			TextView textView = (TextView) findViewById(R.id.game_list_label);
+			if (textView != null) {
+				textView.setText(String.format("Games near %s", intersection));
+			}
+		}
 	}
 
 	/** Get the last known location from the device. */
@@ -159,6 +183,7 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		private final Context mContext;
 		private final Location mLocation;
 		
+		private String mIntersection = null;
 		private ProgressDialog mProgressDialog = null;
 
 		public RequestGamesListTask(final Context context, final Location location) {
@@ -189,8 +214,15 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		protected List<Game> doInBackground(Void... params) {
 			if (mLocation != null) {
 				try {
-					return MapAttackClient.getApplicationClient(mContext).getGames(mLocation.getLatitude(),
+					// Get the MapAttackClient
+					final MapAttackClient client = MapAttackClient.getApplicationClient(mContext);
+					
+					// Get the nearest intersection
+					mIntersection = client.getNearestIntersection(mLocation.getLatitude(),
 							mLocation.getLongitude());
+					
+					// Get the game list
+					return client.getGames(mLocation.getLatitude(), mLocation.getLongitude());
 				} catch (RPCException e) {
 					Log.e(TAG, "Got an RPCException when looking for nearby games.", e);
 					Toast.makeText(mContext, R.string.error_game_list_unavailable, Toast.LENGTH_LONG);
@@ -203,7 +235,9 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		protected void onPostExecute(List<Game> games) {
 			if (games != null) {
 				try {
-					((GameListActivity) mContext).populateGameList(games);
+					final GameListActivity activity = (GameListActivity) mContext;
+					activity.setNearestIntersection(mIntersection);
+					activity.populateGameList(games);
 				} catch (ClassCastException e) {
 					Log.w(TAG, "Got a ClassCastException when trying to update the game list!", e);
 				}

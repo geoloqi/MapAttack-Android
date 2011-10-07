@@ -3,7 +3,7 @@
     <string name="app_name">MapAttack</string>
     
     <!-- Game List -->
-    <string name="game_list_label">Games near your location.</string>
+    <string name="game_list_label">Games near your location</string>
     <string name="game_list_empty_text">There are no games in your area.\n\nIf you would like to bring a game to your area, please contact us:\n\nplay@mapattack.org</string>
     <string name="game_list_loading_text">Searching for games...</string>
     
