@@ -23,6 +23,7 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.geoloqi.ADB;
 import com.geoloqi.Installation;
@@ -31,6 +32,7 @@ import com.geoloqi.interfaces.GeoloqiConstants;
 import com.geoloqi.interfaces.RPCException;
 
 public class MapAttackClient implements GeoloqiConstants {
+	private final String TAG = "MapAttackClient";
 
 	private static final int TIMEOUT = 60000;
 
@@ -116,6 +118,40 @@ public class MapAttackClient implements GeoloqiConstants {
 		} catch (JSONException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	/**
+	 * Get the best guess intersection name for the given latitude and longitude.
+	 * 
+	 * @param latitude
+	 * @param longitude
+	 * @return The nearest intersection as a String or null.
+	 */
+	public String getNearestIntersection(final Double latitude, final Double longitude) {
+		// Build the request
+		final MyRequest request = new MyRequest(MyRequest.GET,
+				String.format("%slocation/context?latitude=%s&longitude=%s", URL_BASE, latitude, longitude));
+
+		try {
+			// Sign the request
+			Header authHeader = new BasicScheme().authenticate(
+					new UsernamePasswordCredentials(GEOLOQI_ID, GEOLOQI_SECRET), request.getRequest());
+			request.addHeaders(authHeader);
+
+			try {
+				// Get the response
+				JSONObject response = send(request);
+				return response.getString("best_name");
+			} catch (RPCException e) {
+				Log.e(TAG, "Got an RPCException when fetching the nearest intersection name!", e);
+			} catch (JSONException e) {
+				Log.e(TAG, "Got a JSONException when fetching the nearest intersection name!", e);
+			}
+		} catch (AuthenticationException e) {
+			Log.e(TAG, "Got an AuthenticationException when fetching the nearest intersection name!", e);
+		}
+
+		return null;
 	}
 
 	public void joinGame(String id) throws RPCException {
