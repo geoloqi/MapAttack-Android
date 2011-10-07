@@ -1,8 +1,7 @@
 package com.geoloqi.rpc;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.http.Header;
 import org.apache.http.ParseException;
@@ -97,7 +96,7 @@ public class MapAttackClient implements GeoloqiConstants {
 		return context.getSharedPreferences(PREFERENCES_FILE, Context.MODE_PRIVATE).getString("authToken", null);
 	}
 
-	public List<Game> getGames(Double latitude, Double longitude) throws RPCException {
+	public ArrayList<Game> getGames(Double latitude, Double longitude) throws RPCException {
 		MyRequest request = new MyRequest(MyRequest.GET,
 				GAME_LIST_ADDRESS + "&latitude=" + latitude + "&longitude=" + longitude);
 		Header authHeader;
@@ -110,7 +109,7 @@ public class MapAttackClient implements GeoloqiConstants {
 		JSONObject response = send(request);
 		try {
 			JSONArray gamesArray = response.getJSONArray("nearby");
-			List<Game> games = new LinkedList<Game>();
+			ArrayList<Game> games = new ArrayList<Game>();
 			for (int i = 0; i < gamesArray.length(); i++) {
 				games.add(new Game(gamesArray.getJSONObject(i)));
 			}

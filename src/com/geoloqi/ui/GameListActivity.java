@@ -1,5 +1,6 @@
 package com.geoloqi.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.app.ListActivity;
@@ -11,6 +12,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -38,21 +40,13 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 	
 	private boolean mSyncOnStart = true;
 	private Intent mPositioningIntent;
-	private List<Game> mGameList = null;
+	private ArrayList<Game> mGameList = null;
 	private String mNearestIntersection = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.game_list_activity);
-
-		if (savedInstanceState != null) {
-			// Restore our saved instance state
-			mSyncOnStart = savedInstanceState.getBoolean(PARAM_SYNC_ON_START, true);
-			mNearestIntersection = savedInstanceState.getString(PARAM_NEAREST_INTERSECTION);
-			
-			setNearestIntersection(mNearestIntersection);
-		}
 
 		// Find our views
 		final Button refreshButton = (Button) findViewById(R.id.refresh_button);
@@ -65,7 +59,17 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		// Reference our positioning service Intent
 		mPositioningIntent = new Intent(this, GeoloqiPositioning.class);
 
-		if (mSyncOnStart) {
+		if (savedInstanceState != null) {
+			// Restore our saved instance state
+			mSyncOnStart = savedInstanceState.getBoolean(PARAM_SYNC_ON_START, true);
+			mNearestIntersection = savedInstanceState.getString(PARAM_NEAREST_INTERSECTION);
+			mGameList = savedInstanceState.getParcelableArrayList(PARAM_GAME_LIST);
+			
+			setNearestIntersection(mNearestIntersection);
+			populateGameList(mGameList);
+		}
+
+		if (mSyncOnStart || mGameList.isEmpty()) {
 			// Start our positioning service
 			stopService(mPositioningIntent);
 			startService(mPositioningIntent);
@@ -86,9 +90,10 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		
-		// TODO: Cache the game list so we don't have to resync on orientation change
-		outState.putBoolean(PARAM_SYNC_ON_START, true);
+		outState.putBoolean(PARAM_SYNC_ON_START, false);
 		outState.putString(PARAM_NEAREST_INTERSECTION, mNearestIntersection);
+		outState.putParcelableArrayList(PARAM_GAME_LIST,
+				(ArrayList<? extends Parcelable>) mGameList);
 	}
 
 	/**
@@ -97,7 +102,7 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 	 * 
 	 * @param games
 	 */
-	private void populateGameList(final List<Game> games) {
+	private void populateGameList(final ArrayList<Game> games) {
 		mGameList = games;
 		setListAdapter(new GameListArrayAdapter(this, R.layout.game_list_element,
 				mGameList.toArray(new Game[mGameList.size()])));
@@ -179,7 +184,7 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 	 * A simple AsyncTask to request the game list from the server.
 	 * @TODO: Move this to an external class file.
 	 * */
-	private static class RequestGamesListTask extends AsyncTask<Void, Void, List<Game>> {
+	private static class RequestGamesListTask extends AsyncTask<Void, Void, ArrayList<Game>> {
 		private final Context mContext;
 		private final Location mLocation;
 		
@@ -211,7 +216,7 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		}
 
 		@Override
-		protected List<Game> doInBackground(Void... params) {
+		protected ArrayList<Game> doInBackground(Void... params) {
 			if (mLocation != null) {
 				try {
 					// Get the MapAttackClient
@@ -232,7 +237,7 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 		}
 
 		@Override
-		protected void onPostExecute(List<Game> games) {
+		protected void onPostExecute(ArrayList<Game> games) {
 			if (games != null) {
 				try {
 					final GameListActivity activity = (GameListActivity) mContext;
