@@ -8,7 +8,6 @@ gen/
 # Ignore editor files
 *.swp
 .settings
-.project
 .classpath
 local.properties
 proguard.cfg
