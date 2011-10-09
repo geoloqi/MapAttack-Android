@@ -5,68 +5,103 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
-import com.geoloqi.ADB;
 import com.geoloqi.mapattack.R;
-import com.geoloqi.interfaces.GeoloqiConstants;
 import com.geoloqi.interfaces.RPCException;
 import com.geoloqi.rpc.AccountMonitor;
 import com.geoloqi.rpc.MapAttackClient;
 import com.geoloqi.services.AndroidPushNotifications;
 
 public class MapAttackActivity extends Activity {
+	public static final String TAG = "MapAttackActivity";
+	
 	public static final String PARAM_GAME_ID = "game_id";
-
-	String id, email, initials;
-	Intent apnIntent;
-	WebView webView;
+	
+	private String mGameId;
+	private String mGameUrl;
+	private WebView mWebView;
+	private Intent mPushNotificationIntent;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		ADB.logo();
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		{// Initialize variables.
-			SharedPreferences prefs = getSharedPreferences(GeoloqiConstants.PREFERENCES_FILE, Context.MODE_PRIVATE);
-			id = getIntent().getExtras().getString(PARAM_GAME_ID);
-			email = prefs.getString("email", null);
-			initials = prefs.getString("initials", null);
-			apnIntent = new Intent(this, AndroidPushNotifications.class);
-			webView = (WebView) findViewById(R.id.webView);
+		final Bundle extras = getIntent().getExtras();
+		if (extras != null) {
+			mGameId = getIntent().getExtras().getString(PARAM_GAME_ID);
 		}
+
+		// Build game
+		mGameUrl = String.format("http://mapattack.org/game/%s", mGameId);
+		mWebView = (WebView) findViewById(R.id.webView);
+		mPushNotificationIntent = new Intent(this, AndroidPushNotifications.class);
+		
+		// Prepare the web view
+		mWebView.clearCache(false);
+		mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+		mWebView.getSettings().setJavaScriptEnabled(true);
+		mWebView.setWebViewClient(mWebViewClient);
 	}
 
 	@Override
 	public void onStart() {
+		super.onStart();
+
+		final MapAttackClient client = MapAttackClient.getApplicationClient(this);
+
+		// Check for a valid account token
+		if (!client.hasToken()) {
+			// Kick user out to the sign in activity
+			Intent intent = new Intent(this, SignInActivity.class);
+			intent.putExtra(MapAttackActivity.PARAM_GAME_ID, mGameId);
+			startActivity(intent);
+			finish();
+		} else {
+			try {
+				// Stop any previously started services and broadcast receivers
+				unregisterReceiver(mPushReceiver);
+				stopService(mPushNotificationIntent);
+			} catch (IllegalArgumentException e) {
+				Log.w(TAG, "Trying to unregister an inactive push receiver.");
+			}
+
+			// Start our services
+			registerReceiver(mPushReceiver, new IntentFilter("PUSH"));
+			startService(mPushNotificationIntent);
+
+			try {
+				// Join the game
+				client.joinGame(mGameId);
+
+				// Load the game into the WebView
+				mWebView.loadUrl(String.format("%s?id=%s", mGameUrl,
+						AccountMonitor.getUserID(this)));
+			} catch (RPCException e) {
+				Log.e(TAG, "Got an RPCException when trying to join the game!", e);
+				Toast.makeText(this, R.string.error_join_game, Toast.LENGTH_LONG).show();
+				finish();
+			}
+		}
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
 		try {
-			super.onStart();
-			if (!MapAttackClient.getApplicationClient(this).hasToken()) {
-				// TODO: Please don't do this! It breaks the activity lifecycle. Refactor!
-				startActivityForResult(new Intent(this, SignInActivity.class), 77);
-			} else {
-				loadWebView();
-			}
-			{//Start services.
-				try {
-					unregisterReceiver(pushReceiver);
-				} catch (IllegalArgumentException e) {
-				}
-				registerReceiver(pushReceiver, new IntentFilter("PUSH"));
-				MapAttackClient.getApplicationClient(this).joinGame(id);
-				stopService(apnIntent);
-				startService(apnIntent);
-			}
-		} catch (RPCException e) {
-			onStart();
+			unregisterReceiver(mPushReceiver);
+			stopService(mPushNotificationIntent);
+		} catch (IllegalArgumentException e) {
+			Log.w(TAG, "Trying to unregister an inactive push receiver.");
 		}
 	}
 
@@ -79,53 +114,23 @@ public class MapAttackActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle item selection
 		switch (item.getItemId()) {
 		case R.id.share:
 			Intent shareIntent = new Intent(Intent.ACTION_SEND);
 			shareIntent.setType("text/plain");
-			shareIntent.putExtra(Intent.EXTRA_TEXT, "Map Attack!  http://mapattack.org/game/" + id + " #mapattack");
+			shareIntent.putExtra(Intent.EXTRA_TEXT,
+					String.format("Map Attack! %s #mapattack", mGameUrl));
 			startActivity(Intent.createChooser(shareIntent, "Share this map: "));
 			return true;
 		case R.id.quit:
-			System.exit(0);
+			finish();
 			return true;
-		default:
-			return super.onOptionsItemSelected(item);
 		}
+		return false;
 	}
 
-	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == 77 && resultCode == RESULT_OK) {
-			loadWebView();
-		}
-	}
-
-	private void loadWebView() {
-		webView.clearCache(false);
-		webView.loadUrl("http://mapattack.org/game/" + id + "?id=" + AccountMonitor.getUserID(this));
-		webView.getSettings().setJavaScriptEnabled(true);
-		webView.setWebViewClient(webViewClient);
-		webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-	}
-
-	@Override
-	public void onRestart() {
-		super.onRestart();
-		registerReceiver(pushReceiver, new IntentFilter("PUSH"));
-		startService(apnIntent);
-	}
-
-	@Override
-	public void onStop() {
-		super.onStop();
-		unregisterReceiver(pushReceiver);
-		stopService(apnIntent);
-	}
-
-	private WebViewClient webViewClient = new WebViewClient() {
-
+	/** A reference to the WebViewClient that hosts the MapAttack game. */
+	private static WebViewClient mWebViewClient = new WebViewClient() {
 		@Override
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
 			view.loadUrl(url);
@@ -133,12 +138,12 @@ public class MapAttackActivity extends Activity {
 		}
 	};
 
-	private BroadcastReceiver pushReceiver = new BroadcastReceiver() {
-
+	/** The broadcast receiver used to push game data to the server. */
+	private BroadcastReceiver mPushReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context ctxt, Intent intent) {
-			webView.loadUrl("javascript:LQHandlePushData(" + intent.getExtras().getString("json") + ")");
+			mWebView.loadUrl(String.format("javascript:LQHandlePushData(%s)",
+					intent.getExtras().getString("json")));
 		}
-
 	};
 }
