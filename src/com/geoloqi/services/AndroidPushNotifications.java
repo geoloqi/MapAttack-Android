@@ -100,6 +100,8 @@ public class AndroidPushNotifications extends Service {
 				}
 			} catch (IOException e) {
 				if (running) {
+					// TODO: If the device loses network connectivity this will quickly
+					//       throw a java.lang.StackOverflowError.
 					run();
 				}
 			}
