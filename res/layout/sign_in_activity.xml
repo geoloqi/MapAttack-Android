@@ -17,24 +17,23 @@
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:gravity="left"
             android:text="Your Initials" />
         <EditText
             android:id="@+id/initials"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:maxLength="2"
-            android:hint="First and Last" />
+            android:inputType="textCapCharacters"
+            android:hint="First and last initial" />
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:gravity="left"
             android:text="Your Email" />
         <EditText
             android:id="@+id/email"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:gravity="left" />
+            android:inputType="textEmailAddress" />
         <Button
             android:id="@+id/submit_button"
             android:layout_width="fill_parent"
