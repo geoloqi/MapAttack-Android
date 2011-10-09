@@ -17,4 +17,6 @@
     <string name="error_game_list_unavailable">The game server is not responding, please try again later.</string>
     <string name="error_initials">Please provide your first and last initial.</string>
     <string name="error_email">Please provide a valid email address.</string>
+    <string name="error_invalid_game_id">The game ID provided was invalid.</string>
+    <string name="error_join_game">Failed to join the game! Please try again later.</string>
 </resources>
