@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.geoloqi.ADB;
 import com.geoloqi.Installation;
@@ -30,9 +31,11 @@ import static com.geoloqi.interfaces.GeoloqiConstants.DOWNLOAD_ADDRESS;
 import static com.geoloqi.interfaces.GeoloqiConstants.DOWNLOAD_PORT;
 
 public class AndroidPushNotifications extends Service {
+	public static final String TAG = "AndroidPushNotifications";
 
 	Notifier notifier;
 	boolean running = true;
+	int exceptions = 0;
 
 	private SoundPool soundPool = new SoundPool(1, AudioManager.STREAM_NOTIFICATION, 0);
 	Hashtable<String, Integer> sounds = new Hashtable<String, Integer>();
@@ -100,9 +103,14 @@ public class AndroidPushNotifications extends Service {
 				}
 			} catch (IOException e) {
 				if (running) {
-					// TODO: If the device loses network connectivity this will quickly
-					//       throw a java.lang.StackOverflowError.
-					run();
+					exceptions++;
+					if (exceptions < 10) {
+						run();
+					} else {
+						Log.w(TAG, "Too many IOExceptions! Lost network connectivity?");
+						// TODO: Restart when connectivity resumes
+						running = false;
+					}
 				}
 			}
 		}
