@@ -14,7 +14,7 @@
     <string name="find_a_game_button">Refresh</string>
     
     <!-- Error Messages -->
-    <string name="error_game_list_unavailable">The game server is not responding, please try again later.</string>
+    <string name="error_game_list_unavailable">The game server is not responding. Do you have an active data connection?</string>
     <string name="error_initials">Please provide your first and last initial.</string>
     <string name="error_email">Please provide a valid email address.</string>
     <string name="error_invalid_game_id">The game ID provided was invalid.</string>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="General">
+        <Preference
+            android:title="Your Initials"
+            android:key="account_initials"
+            android:summary="" />
+        <Preference
+            android:title="Email Address"
+            android:key="account_email_address"
+            android:summary="" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Game Server">
+        <Preference
+            android:title="Server URL"
+            android:key="game_server_url"
+            android:summary="unknown"
+            android:enabled="false" />
+    </PreferenceCategory>
+</PreferenceScreen>
