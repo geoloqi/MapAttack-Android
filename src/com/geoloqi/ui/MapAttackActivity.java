@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.geoloqi.mapattack.R;
@@ -51,6 +52,9 @@ public class MapAttackActivity extends Activity {
 		mWebView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 		mWebView.getSettings().setJavaScriptEnabled(true);
 		mWebView.setWebViewClient(mWebViewClient);
+		
+		// Show the loading indicator
+		setLoading(true);
 	}
 
 	@Override
@@ -129,12 +133,33 @@ public class MapAttackActivity extends Activity {
 		return false;
 	}
 
+	/** Show or hide the loading indicator. */
+	private void setLoading(boolean loading) {
+		ProgressBar spinner = (ProgressBar) findViewById(R.id.loading);
+
+		if (loading) {
+			spinner.setVisibility(View.VISIBLE);
+			mWebView.setVisibility(View.GONE);
+		} else {
+			spinner.setVisibility(View.GONE);
+			mWebView.setVisibility(View.VISIBLE);
+		}
+	}
+
 	/** A reference to the WebViewClient that hosts the MapAttack game. */
-	private static WebViewClient mWebViewClient = new WebViewClient() {
+	private WebViewClient mWebViewClient = new WebViewClient() {
 		@Override
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
 			view.loadUrl(url);
 			return true;
+		}
+		
+		@Override
+		public void onPageFinished(WebView view, String url) {
+			super.onPageFinished(view, url);
+			
+			// Make WebView visible and hide loading indicator
+			setLoading(false);
 		}
 	};
 
