@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -103,9 +104,11 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 	 * @param games
 	 */
 	private void populateGameList(final ArrayList<Game> games) {
-		mGameList = games;
-		setListAdapter(new GameListArrayAdapter(this, R.layout.game_list_element,
-				mGameList.toArray(new Game[mGameList.size()])));
+		if (games != null) {
+			mGameList = games;
+			setListAdapter(new GameListArrayAdapter(this, R.layout.game_list_element,
+					mGameList.toArray(new Game[mGameList.size()])));
+		}
 		setLoading(false);
 	}
 
@@ -230,7 +233,6 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 					return client.getGames(mLocation.getLatitude(), mLocation.getLongitude());
 				} catch (RPCException e) {
 					Log.e(TAG, "Got an RPCException when looking for nearby games.", e);
-					Toast.makeText(mContext, R.string.error_game_list_unavailable, Toast.LENGTH_LONG);
 				}
 			}
 			return null;
@@ -238,15 +240,22 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 
 		@Override
 		protected void onPostExecute(ArrayList<Game> games) {
-			if (games != null) {
 				try {
 					final GameListActivity activity = (GameListActivity) mContext;
-					activity.setNearestIntersection(mIntersection);
-					activity.populateGameList(games);
+					if (games != null) {
+						activity.setNearestIntersection(mIntersection);
+						activity.populateGameList(games);
+					} else {
+						// Display error message to user
+						Toast toast = Toast.makeText(mContext, R.string.error_game_list_unavailable,
+								Toast.LENGTH_LONG);
+						toast.setGravity(Gravity.CENTER, 0, 0);
+						toast.show();
+						activity.setLoading(false);
+					}
 				} catch (ClassCastException e) {
 					Log.w(TAG, "Got a ClassCastException when trying to update the game list!", e);
 				}
-			}
 
 			// Dismiss our progress dialog
 			if (mProgressDialog != null) {
