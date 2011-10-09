@@ -75,7 +75,13 @@ public class GeoloqiPositioning extends Service implements LocationListener {
 	public void onLocationChanged(Location location) {
 		@SuppressWarnings("unchecked")
 		Fix lqLocation = new Fix(location, new Pair<String, String>("battery", "" + batteryLevel));
-		fixSocket.pushFix(lqLocation);
+		
+		if (isConnected()) {
+			fixSocket.pushFix(lqLocation);
+		} else {
+			// TODO: This is a crude check. Should probably be rolled into UDPClient class directly.
+			Log.w(TAG, "Network unavailable, failed to push location fix!");
+		}
 	}
 
 	@Override
