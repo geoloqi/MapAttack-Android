@@ -15,14 +15,12 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 import android.widget.TextView;
 
 import com.geoloqi.mapattack.R;
@@ -104,12 +102,12 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 	 * @param games
 	 */
 	private void populateGameList(final ArrayList<Game> games) {
+		setLoading(false);
 		if (games != null) {
 			mGameList = games;
 			setListAdapter(new GameListArrayAdapter(this, R.layout.game_list_element,
 					mGameList.toArray(new Game[mGameList.size()])));
 		}
-		setLoading(false);
 	}
 
 	/**
@@ -235,24 +233,15 @@ public class GameListActivity extends ListActivity implements OnClickListener {
 					Log.e(TAG, "Got an RPCException when looking for nearby games.", e);
 				}
 			}
-			return null;
+			return new ArrayList<Game>();
 		}
 
 		@Override
 		protected void onPostExecute(ArrayList<Game> games) {
 				try {
 					final GameListActivity activity = (GameListActivity) mContext;
-					if (games != null) {
-						activity.setNearestIntersection(mIntersection);
-						activity.populateGameList(games);
-					} else {
-						// Display error message to user
-						Toast toast = Toast.makeText(mContext, R.string.error_game_list_unavailable,
-								Toast.LENGTH_LONG);
-						toast.setGravity(Gravity.CENTER, 0, 0);
-						toast.show();
-						activity.setLoading(false);
-					}
+					activity.setNearestIntersection(mIntersection);
+					activity.populateGameList(games);
 				} catch (ClassCastException e) {
 					Log.w(TAG, "Got a ClassCastException when trying to update the game list!", e);
 				}
