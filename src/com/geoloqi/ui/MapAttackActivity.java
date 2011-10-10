@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -41,6 +42,9 @@ public class MapAttackActivity extends Activity {
 		if (extras != null) {
 			mGameId = getIntent().getExtras().getString(PARAM_GAME_ID);
 		}
+
+		// Keep the screen lit while this Activity is visible
+		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 		// Build game
 		mGameUrl = String.format("http://mapattack.org/game/%s", mGameId);
